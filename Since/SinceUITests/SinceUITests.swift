@@ -23,14 +23,29 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testAddingATrackerShowsItInTheList() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        app.buttons["Add Tracker"].tap()
+
+        XCTAssertTrue(app.staticTexts["New Tracker"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testDeletingATrackerRemovesItFromTheList() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        XCTAssertTrue(app.staticTexts["New Tracker"].waitForExistence(timeout: 2))
+
+        app.staticTexts["New Tracker"].swipeLeft()
+        app.buttons["Delete"].tap()
+
+        XCTAssertFalse(app.staticTexts["New Tracker"].waitForExistence(timeout: 2))
     }
 
     @MainActor

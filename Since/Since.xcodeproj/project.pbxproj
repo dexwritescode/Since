@@ -71,6 +71,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		40977EB57D204413967ED1F2 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		DF90614B2FF755D300570913 /* Since */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Since;
@@ -138,6 +143,7 @@
 				DF90615B2FF755D400570913 /* SinceTests */,
 				DF9061652FF755D400570913 /* SinceUITests */,
 				DF90617F2FF7578E00570913 /* SinceWidget */,
+				40977EB57D204413967ED1F2 /* Shared */,
 				DF90617A2FF7578E00570913 /* Frameworks */,
 				DF90614A2FF755D300570913 /* Products */,
 			);
@@ -181,6 +187,7 @@
 				DF90618C2FF7578F00570913 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				40977EB57D204413967ED1F2 /* Shared */,
 				DF90614B2FF755D300570913 /* Since */,
 			);
 			name = Since;
@@ -249,6 +256,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				40977EB57D204413967ED1F2 /* Shared */,
 				DF90617F2FF7578E00570913 /* SinceWidget */,
 			);
 			name = SinceWidgetExtension;
