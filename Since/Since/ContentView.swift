@@ -7,55 +7,61 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Query private var trackers: [Tracker]
 
     var body: some View {
         NavigationSplitView {
             List {
-                ForEach(items) { item in
+                ForEach(trackers) { tracker in
                     NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                        Text(tracker.name)
                     } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        Label(tracker.name, systemImage: tracker.icon)
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .onDelete(perform: deleteTrackers)
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
                 }
                 ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                    Button(action: addTracker) {
+                        Label("Add Tracker", systemImage: "plus")
                     }
                 }
             }
         } detail: {
-            Text("Select an item")
+            Text("Select a tracker")
         }
     }
 
-    private func addItem() {
+    private func addTracker() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+            let tracker = Tracker(name: "New Tracker", icon: "flame.fill", colorHex: "#4F8EF7")
+            tracker.streakPeriods.append(StreakPeriod())
+            modelContext.insert(tracker)
         }
+        try? modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
-    private func deleteItems(offsets: IndexSet) {
+    private func deleteTrackers(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
-                modelContext.delete(items[index])
+                modelContext.delete(trackers[index])
             }
         }
+        try? modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Tracker.self, inMemory: true)
 }
