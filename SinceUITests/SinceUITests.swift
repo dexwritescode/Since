@@ -25,6 +25,7 @@ final class SinceUITests: XCTestCase {
     @MainActor
     func testAddingATrackerShowsItInTheList() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
         app.launch()
 
         app.buttons["Add Tracker"].tap()
@@ -35,6 +36,7 @@ final class SinceUITests: XCTestCase {
     @MainActor
     func testDeletingATrackerRemovesItFromTheList() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
         app.launch()
 
         app.buttons["Add Tracker"].tap()
