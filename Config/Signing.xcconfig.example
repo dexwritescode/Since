@@ -1,0 +1,9 @@
+// Local signing configuration — copy this file to Signing.xcconfig and fill in your value.
+// Signing.xcconfig is gitignored and will never be committed.
+//
+// DEVELOPMENT_TEAM: Your 10-character Apple Developer Team ID (found at developer.apple.com → Membership).
+//   Leave blank to build for Simulator only (no Apple account required).
+//
+// After copying, open Since.xcodeproj — Xcode picks up this value automatically.
+
+DEVELOPMENT_TEAM =
