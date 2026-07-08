@@ -45,9 +45,6 @@ jobs:
       matrix:
         device:
           - "iPhone 17 Pro Max"
-          - "iPhone 17 Pro"
-          - "iPhone 17"
-          - "iPhone 17e"
 
     steps:
       - uses: actions/checkout@v4
