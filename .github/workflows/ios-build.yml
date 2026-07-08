@@ -15,8 +15,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  select-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.pick.outputs.runner }}
+      self_hosted: ${{ steps.pick.outputs.self_hosted }}
+    steps:
+      - name: Pick runner
+        id: pick
+        env:
+          GH_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+        run: |
+          online=$(gh api "repos/${{ github.repository }}/actions/runners" \
+            --jq '[.runners[] | select(.status=="online" and (.labels | map(.name) | contains(["self-hosted","macOS","ARM64"])))] | length')
+          if [ "$online" -gt 0 ]; then
+            echo 'runner=["self-hosted","macOS","ARM64"]' >> "$GITHUB_OUTPUT"
+            echo "self_hosted=true" >> "$GITHUB_OUTPUT"
+          else
+            echo 'runner=["macos-26"]' >> "$GITHUB_OUTPUT"
+            echo "self_hosted=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
-    runs-on: macos-26
+    needs: select-runner
+    runs-on: ${{ fromJson(needs.select-runner.outputs.runner) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +51,7 @@ jobs:
           restore-keys: deriveddata-${{ runner.os }}-
 
       - name: Select Xcode
+        if: needs.select-runner.outputs.self_hosted != 'true'
         run: sudo xcode-select -s /Applications/Xcode_26.4.1.app
 
       - name: Create signing config
