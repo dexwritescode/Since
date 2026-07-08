@@ -64,6 +64,10 @@ jobs:
       - name: Create signing config
         run: cp -f Config/Signing.xcconfig.example Config/Signing.xcconfig
 
+      - name: Pre-boot simulator
+        if: needs.select-runner.outputs.self_hosted == 'true'
+        run: xcrun simctl boot "${{ matrix.device }}" || true
+
       - name: Test on ${{ matrix.device }}
         run: |
           xcodebuild test \
