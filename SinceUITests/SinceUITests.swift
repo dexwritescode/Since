@@ -30,7 +30,63 @@ final class SinceUITests: XCTestCase {
 
         app.buttons["Add Tracker"].tap()
 
-        XCTAssertTrue(app.staticTexts["New Tracker"].waitForExistence(timeout: 2))
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Smoke Free")
+
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Smoke Free"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testCancelingNewTrackerSheetDiscardsIt() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Discarded Tracker")
+
+        app.buttons["Cancel"].tap()
+
+        XCTAssertFalse(app.staticTexts["Discarded Tracker"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testTappingATrackerOpensEditSheetAndPersistsChanges() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Original Name")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Original Name"].waitForExistence(timeout: 2))
+        app.staticTexts["Original Name"].tap()
+
+        let editNameField = app.textFields["Tracker name"]
+        XCTAssertTrue(editNameField.waitForExistence(timeout: 2))
+        XCTAssertEqual(editNameField.value as? String, "Original Name")
+
+        editNameField.tap()
+        if let existingValue = editNameField.value as? String {
+            editNameField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingValue.count))
+        }
+        editNameField.typeText("Renamed Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Renamed Tracker"].waitForExistence(timeout: 2))
+        XCTAssertFalse(app.staticTexts["Original Name"].waitForExistence(timeout: 2))
     }
 
     @MainActor
@@ -40,12 +96,18 @@ final class SinceUITests: XCTestCase {
         app.launch()
 
         app.buttons["Add Tracker"].tap()
-        XCTAssertTrue(app.staticTexts["New Tracker"].waitForExistence(timeout: 2))
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Temporary Tracker")
+        app.buttons["Save"].tap()
 
-        app.staticTexts["New Tracker"].swipeLeft()
+        XCTAssertTrue(app.staticTexts["Temporary Tracker"].waitForExistence(timeout: 2))
+
+        app.staticTexts["Temporary Tracker"].swipeLeft()
         app.buttons["Delete"].tap()
 
-        XCTAssertFalse(app.staticTexts["New Tracker"].waitForExistence(timeout: 2))
+        XCTAssertFalse(app.staticTexts["Temporary Tracker"].waitForExistence(timeout: 2))
     }
 
     @MainActor
