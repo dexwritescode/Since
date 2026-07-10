@@ -38,27 +38,56 @@ extension Tracker {
         displayFormatOverride ?? .smart
     }
 
-    func elapsedTimeString(asOf date: Date = .now) -> String? {
+    func elapsedTimeInterval(asOf date: Date = .now) -> TimeInterval? {
         guard let start = currentStreakStartDate else { return nil }
-        return effectiveDisplayFormat.string(from: date.timeIntervalSince(start))
+        return date.timeIntervalSince(start)
+    }
+
+    func elapsedTimeString(asOf date: Date = .now) -> String? {
+        guard let elapsed = elapsedTimeInterval(asOf: date) else { return nil }
+        return effectiveDisplayFormat.string(from: elapsed)
     }
 
     /// The soonest milestone not yet reached, or nil if there isn't one (no active streak, or
     /// every milestone has already fired).
     func nextMilestone(asOf date: Date = .now) -> Milestone? {
-        guard let start = currentStreakStartDate else { return nil }
-        let elapsed = date.timeIntervalSince(start)
+        guard let elapsed = elapsedTimeInterval(asOf: date) else { return nil }
         return milestones
             .filter { $0.triggerDuration > elapsed }
             .min { $0.triggerDuration < $1.triggerDuration }
+    }
+
+    /// Closed streak periods, most recently started first.
+    var pastStreakPeriods: [StreakPeriod] {
+        streakPeriods
+            .filter { $0.endDate != nil }
+            .sorted { $0.startDate > $1.startDate }
+    }
+
+    /// Closes the active streak period (with an optional note) and opens a new one starting now.
+    /// Does not save the context or reload widget timelines — callers own that.
+    static func resetStreak(on tracker: Tracker, note: String?, asOf date: Date = .now) {
+        let trimmedNote = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let active = tracker.activeStreakPeriod {
+            active.endDate = date
+            active.note = (trimmedNote?.isEmpty ?? true) ? nil : trimmedNote
+        }
+        tracker.streakPeriods.append(StreakPeriod(startDate: date))
     }
 }
 
 extension Milestone {
     func remainingTimeString(from tracker: Tracker, asOf date: Date = .now) -> String? {
-        guard let start = tracker.currentStreakStartDate else { return nil }
-        let remaining = triggerDuration - date.timeIntervalSince(start)
+        guard let elapsed = tracker.elapsedTimeInterval(asOf: date) else { return nil }
+        let remaining = triggerDuration - elapsed
         guard remaining > 0 else { return nil }
         return tracker.effectiveDisplayFormat.string(from: remaining)
+    }
+}
+
+extension StreakPeriod {
+    func durationString(format: TimeDisplayFormat) -> String? {
+        guard let endDate else { return nil }
+        return format.string(from: endDate.timeIntervalSince(startDate))
     }
 }

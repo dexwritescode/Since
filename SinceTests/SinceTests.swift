@@ -233,3 +233,63 @@ struct TrackerDisplayTests {
         #expect(milestone.remainingTimeString(from: tracker, asOf: now) == "2 days")
     }
 }
+
+@MainActor
+struct TrackerResetTests {
+    private func makeContext() throws -> ModelContext {
+        let schema = Schema([Tracker.self, StreakPeriod.self, Milestone.self])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        return ModelContext(container)
+    }
+
+    @Test func resetClosesActivePeriodAndOpensANewOne() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+        let start = Date.now.addingTimeInterval(-86400 * 4)
+        tracker.streakPeriods.append(StreakPeriod(startDate: start))
+
+        let resetDate = Date.now
+        Tracker.resetStreak(on: tracker, note: "Slipped up", asOf: resetDate)
+
+        #expect(tracker.streakPeriods.count == 2)
+        let closed = try #require(tracker.streakPeriods.first { $0.startDate == start })
+        #expect(closed.endDate == resetDate)
+        #expect(closed.note == "Slipped up")
+
+        let active = try #require(tracker.activeStreakPeriod)
+        #expect(active.startDate == resetDate)
+    }
+
+    @Test func resetTrimsBlankNoteToNil() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+        tracker.streakPeriods.append(StreakPeriod(startDate: .now.addingTimeInterval(-86400)))
+
+        Tracker.resetStreak(on: tracker, note: "   ")
+
+        let closed = try #require(tracker.pastStreakPeriods.first)
+        #expect(closed.note == nil)
+    }
+
+    @Test func pastStreakPeriodsExcludesActiveAndSortsNewestFirst() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+
+        let older = StreakPeriod(
+            startDate: .now.addingTimeInterval(-86400 * 10),
+            endDate: .now.addingTimeInterval(-86400 * 8)
+        )
+        let newer = StreakPeriod(
+            startDate: .now.addingTimeInterval(-86400 * 5),
+            endDate: .now.addingTimeInterval(-86400 * 3)
+        )
+        let active = StreakPeriod(startDate: .now.addingTimeInterval(-86400))
+        tracker.streakPeriods.append(contentsOf: [older, newer, active])
+
+        #expect(tracker.pastStreakPeriods == [newer, older])
+    }
+}

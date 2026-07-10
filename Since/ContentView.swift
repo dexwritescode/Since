@@ -14,21 +14,17 @@ struct ContentView: View {
     @Query private var trackers: [Tracker]
 
     @State private var isPresentingNewTrackerSheet = false
-    @State private var trackerBeingEdited: Tracker?
+    @State private var selectedTracker: Tracker?
 
     var body: some View {
         NavigationSplitView {
-            List {
+            List(selection: $selectedTracker) {
                 ForEach(trackers) { tracker in
-                    Button {
-                        trackerBeingEdited = tracker
-                    } label: {
-                        HeroCardView(tracker: tracker)
-                    }
-                    .buttonStyle(.plain)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                    HeroCardView(tracker: tracker)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                        .tag(tracker)
                 }
                 .onDelete(perform: deleteTrackers)
             }
@@ -45,24 +41,24 @@ struct ContentView: View {
             .sheet(isPresented: $isPresentingNewTrackerSheet) {
                 TrackerEditSheet(tracker: nil)
             }
-            .sheet(item: $trackerBeingEdited) { tracker in
-                TrackerEditSheet(tracker: tracker)
-            }
             .onChange(of: isPresentingNewTrackerSheet) { _, isPresented in
                 if !isPresented { WidgetCenter.shared.reloadAllTimelines() }
             }
-            .onChange(of: trackerBeingEdited) { _, tracker in
-                if tracker == nil { WidgetCenter.shared.reloadAllTimelines() }
-            }
         } detail: {
-            Text("Select a tracker")
+            if let selectedTracker {
+                TrackerDetailView(tracker: selectedTracker)
+            } else {
+                Text("Select a tracker")
+            }
         }
     }
 
     private func deleteTrackers(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
-                modelContext.delete(trackers[index])
+                let tracker = trackers[index]
+                if selectedTracker == tracker { selectedTracker = nil }
+                modelContext.delete(tracker)
             }
         }
         try? modelContext.save()

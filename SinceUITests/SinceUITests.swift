@@ -59,7 +59,7 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
-    func testTappingATrackerOpensEditSheetAndPersistsChanges() throws {
+    func testTappingATrackerOpensDetailView() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing"]
         app.launch()
@@ -74,6 +74,29 @@ final class SinceUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Original Name"].waitForExistence(timeout: 2))
         app.staticTexts["Original Name"].tap()
 
+        XCTAssertTrue(app.buttons["Edit"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["Reset Streak"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testEditingATrackerFromDetailViewPersistsChanges() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Original Name")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Original Name"].waitForExistence(timeout: 2))
+        app.staticTexts["Original Name"].tap()
+
+        XCTAssertTrue(app.buttons["Edit"].waitForExistence(timeout: 2))
+        app.buttons["Edit"].tap()
+
         let editNameField = app.textFields["Tracker name"]
         XCTAssertTrue(editNameField.waitForExistence(timeout: 2))
         XCTAssertEqual(editNameField.value as? String, "Original Name")
@@ -85,8 +108,38 @@ final class SinceUITests: XCTestCase {
         editNameField.typeText("Renamed Tracker")
         app.buttons["Save"].tap()
 
-        XCTAssertTrue(app.staticTexts["Renamed Tracker"].waitForExistence(timeout: 2))
-        XCTAssertFalse(app.staticTexts["Original Name"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.navigationBars["Renamed Tracker"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testResettingAStreakAddsAHistoryEntry() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Streak Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Streak Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["Streak Tracker"].tap()
+
+        XCTAssertTrue(app.staticTexts["No past streaks yet"].waitForExistence(timeout: 2))
+
+        app.buttons["Reset Streak"].tap()
+
+        let noteField = app.textFields["Reason for resetting"]
+        XCTAssertTrue(noteField.waitForExistence(timeout: 2))
+        noteField.tap()
+        noteField.typeText("Slipped up")
+
+        app.buttons["Reset"].tap()
+
+        XCTAssertFalse(app.staticTexts["No past streaks yet"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Slipped up"].waitForExistence(timeout: 2))
     }
 
     @MainActor
