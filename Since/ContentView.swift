@@ -23,12 +23,16 @@ struct ContentView: View {
                     Button {
                         trackerBeingEdited = tracker
                     } label: {
-                        Label(tracker.name, systemImage: tracker.icon)
+                        HeroCardView(tracker: tracker)
                     }
                     .buttonStyle(.plain)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 }
                 .onDelete(perform: deleteTrackers)
             }
+            .listStyle(.plain)
             .toolbar {
                 ToolbarItem {
                     Button {

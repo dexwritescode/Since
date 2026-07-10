@@ -136,3 +136,100 @@ struct ColorHexTests {
         #expect(color.hexString == "#4F8EF7")
     }
 }
+
+struct TimeDisplayFormatTests {
+    @Test func smartShowsMinutesUnderAnHour()  {
+        #expect(TimeDisplayFormat.smart.string(from: 90) == "1 minute")
+        #expect(TimeDisplayFormat.smart.string(from: 60 * 45) == "45 minutes")
+    }
+
+    @Test func smartShowsHoursUnderADay() {
+        #expect(TimeDisplayFormat.smart.string(from: 3600) == "1 hour")
+        #expect(TimeDisplayFormat.smart.string(from: 3600 * 5) == "5 hours")
+    }
+
+    @Test func smartShowsDaysAtOrAboveADay() {
+        #expect(TimeDisplayFormat.smart.string(from: 86400) == "1 day")
+        #expect(TimeDisplayFormat.smart.string(from: 86400 * 5) == "5 days")
+    }
+
+    @Test func daysOnlyAlwaysShowsDays() {
+        #expect(TimeDisplayFormat.daysOnly.string(from: 3600) == "0 days")
+        #expect(TimeDisplayFormat.daysOnly.string(from: 86400 * 2) == "2 days")
+    }
+
+    @Test func detailedShowsDaysHoursMinutes() {
+        let interval: TimeInterval = 86400 * 3 + 3600 * 4 + 60 * 12
+        #expect(TimeDisplayFormat.detailed.string(from: interval) == "3d 4h 12m")
+    }
+}
+
+@MainActor
+struct TrackerDisplayTests {
+    private func makeContext() throws -> ModelContext {
+        let schema = Schema([Tracker.self, StreakPeriod.self, Milestone.self])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        return ModelContext(container)
+    }
+
+    @Test func elapsedTimeStringUsesOverrideFormat() throws {
+        let context = try makeContext()
+        let tracker = Tracker(
+            name: "Smoking",
+            icon: "flame.fill",
+            colorHex: "#FF0000",
+            displayFormatOverride: .daysOnly
+        )
+        context.insert(tracker)
+        tracker.streakPeriods.append(StreakPeriod(startDate: .now.addingTimeInterval(-86400 * 2)))
+
+        #expect(tracker.elapsedTimeString(asOf: .now) == "2 days")
+    }
+
+    @Test func elapsedTimeStringIsNilWithoutAnActiveStreak() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+
+        #expect(tracker.elapsedTimeString() == nil)
+    }
+
+    @Test func nextMilestonePicksSoonestUnreachedOne() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+        let start = Date.now.addingTimeInterval(-86400 * 5)
+        tracker.streakPeriods.append(StreakPeriod(startDate: start))
+
+        let reached = Milestone(label: "3 Days", triggerDuration: 86400 * 3)
+        let soonestUnreached = Milestone(label: "1 Week", triggerDuration: 86400 * 7)
+        let laterUnreached = Milestone(label: "1 Month", triggerDuration: 86400 * 30)
+        tracker.milestones.append(contentsOf: [reached, soonestUnreached, laterUnreached])
+
+        #expect(tracker.nextMilestone() === soonestUnreached)
+    }
+
+    @Test func nextMilestoneIsNilWhenAllReached() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+        tracker.streakPeriods.append(StreakPeriod(startDate: .now.addingTimeInterval(-86400 * 10)))
+        tracker.milestones.append(Milestone(label: "3 Days", triggerDuration: 86400 * 3))
+
+        #expect(tracker.nextMilestone() == nil)
+    }
+
+    @Test func remainingTimeStringCountsDownToMilestone() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000", displayFormatOverride: .daysOnly)
+        context.insert(tracker)
+        let now = Date.now
+        tracker.streakPeriods.append(StreakPeriod(startDate: now.addingTimeInterval(-86400 * 5)))
+
+        let milestone = Milestone(label: "1 Week", triggerDuration: 86400 * 7)
+        tracker.milestones.append(milestone)
+
+        #expect(milestone.remainingTimeString(from: tracker, asOf: now) == "2 days")
+    }
+}
