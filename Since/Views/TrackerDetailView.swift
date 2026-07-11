@@ -16,6 +16,16 @@ struct TrackerDetailView: View {
     @State private var milestoneBeingEdited: Milestone?
     @State private var isPresentingResetSheet = false
 
+    @AppStorage(
+        AppSettings.defaultDisplayFormatKey,
+        store: UserDefaults(suiteName: SharedModelContainer.appGroupIdentifier)
+    )
+    private var defaultDisplayFormat: TimeDisplayFormat = .smart
+
+    private var effectiveDisplayFormat: TimeDisplayFormat {
+        tracker.displayFormatOverride ?? defaultDisplayFormat
+    }
+
     private var sortedMilestones: [Milestone] {
         tracker.milestones.sorted { $0.triggerDuration < $1.triggerDuration }
     }
@@ -109,7 +119,7 @@ struct TrackerDetailView: View {
 
         return TimelineView(.periodic(from: .now, by: 60)) { context in
             VStack(spacing: 8) {
-                if let elapsed = tracker.elapsedTimeString(asOf: context.date) {
+                if let elapsed = tracker.elapsedTimeString(asOf: context.date, format: effectiveDisplayFormat) {
                     Text(elapsed)
                         .font(.system(size: 56, weight: .bold, design: .rounded))
                         .foregroundStyle(tint)
@@ -144,7 +154,7 @@ struct TrackerDetailView: View {
     private func milestoneSubtitle(_ milestone: Milestone, reached: Bool) -> String {
         if reached {
             return "Reached"
-        } else if let remaining = milestone.remainingTimeString(from: tracker) {
+        } else if let remaining = milestone.remainingTimeString(from: tracker, format: effectiveDisplayFormat) {
             return "\(remaining) left"
         } else {
             return "\(Int(milestone.triggerDuration / 86400)) days"
@@ -159,7 +169,7 @@ struct TrackerDetailView: View {
     private func historyRow(_ period: StreakPeriod) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(dateRangeText(period))
-            if let duration = period.durationString(format: tracker.effectiveDisplayFormat) {
+            if let duration = period.durationString(format: effectiveDisplayFormat) {
                 Text(duration)
                     .font(.caption)
                     .foregroundStyle(.secondary)

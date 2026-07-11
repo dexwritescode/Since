@@ -143,6 +143,49 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
+    func testOpeningSettingsShowsDisplayAndNotificationsSections() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Settings"].tap()
+
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Default Time Format"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Milestone Notifications"].waitForExistence(timeout: 2))
+
+        app.buttons["Done"].tap()
+
+        XCTAssertFalse(app.navigationBars["Settings"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testChangingDefaultTimeFormatAffectsTrackersWithoutOverride() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Format Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Format Tracker"].waitForExistence(timeout: 2))
+
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 2))
+
+        app.buttons["Default Time Format"].tap()
+        app.buttons["Detailed"].tap()
+
+        app.buttons["Done"].tap()
+
+        XCTAssertTrue(app.staticTexts["0d 0h 0m"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
     func testDeletingATrackerRemovesItFromTheList() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing"]

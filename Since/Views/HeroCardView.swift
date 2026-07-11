@@ -8,6 +8,12 @@ import SwiftUI
 struct HeroCardView: View {
     let tracker: Tracker
 
+    @AppStorage(
+        AppSettings.defaultDisplayFormatKey,
+        store: UserDefaults(suiteName: SharedModelContainer.appGroupIdentifier)
+    )
+    private var defaultDisplayFormat: TimeDisplayFormat = .smart
+
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             content(now: context.date)
@@ -16,6 +22,7 @@ struct HeroCardView: View {
 
     private func content(now: Date) -> some View {
         let tint = Color(hex: tracker.colorHex)
+        let format = tracker.displayFormatOverride ?? defaultDisplayFormat
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
@@ -28,7 +35,7 @@ struct HeroCardView: View {
                 Spacer()
             }
 
-            if let elapsed = tracker.elapsedTimeString(asOf: now) {
+            if let elapsed = tracker.elapsedTimeString(asOf: now, format: format) {
                 Text(elapsed)
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundStyle(tint)
@@ -41,7 +48,7 @@ struct HeroCardView: View {
             }
 
             if let milestone = tracker.nextMilestone(asOf: now),
-               let remaining = milestone.remainingTimeString(from: tracker, asOf: now) {
+               let remaining = milestone.remainingTimeString(from: tracker, asOf: now, format: format) {
                 Text("Next: \(milestone.label) — \(remaining) left")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)

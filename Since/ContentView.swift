@@ -14,6 +14,7 @@ struct ContentView: View {
     @Query private var trackers: [Tracker]
 
     @State private var isPresentingNewTrackerSheet = false
+    @State private var isPresentingSettingsSheet = false
     @State private var selectedTracker: Tracker?
 
     var body: some View {
@@ -30,6 +31,13 @@ struct ContentView: View {
             }
             .listStyle(.plain)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        isPresentingSettingsSheet = true
+                    } label: {
+                        Label("Settings", systemImage: "gearshape")
+                    }
+                }
                 ToolbarItem {
                     Button {
                         isPresentingNewTrackerSheet = true
@@ -40,6 +48,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $isPresentingNewTrackerSheet) {
                 TrackerEditSheet(tracker: nil)
+            }
+            .sheet(isPresented: $isPresentingSettingsSheet) {
+                SettingsView()
             }
             .onChange(of: isPresentingNewTrackerSheet) { _, isPresented in
                 if !isPresented { WidgetCenter.shared.reloadAllTimelines() }
