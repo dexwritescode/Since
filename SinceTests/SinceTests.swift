@@ -232,6 +232,51 @@ struct TrackerDisplayTests {
 
         #expect(milestone.remainingTimeString(from: tracker, asOf: now) == "2 days")
     }
+
+    @Test func effectiveDisplayFormatFallsBackToAppSettingsDefaultWhenNoOverride() throws {
+        let originalDefault = AppSettings.defaultDisplayFormat
+        defer { AppSettings.defaultDisplayFormat = originalDefault }
+
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+
+        AppSettings.defaultDisplayFormat = .detailed
+        #expect(tracker.effectiveDisplayFormat == .detailed)
+
+        AppSettings.defaultDisplayFormat = .daysOnly
+        #expect(tracker.effectiveDisplayFormat == .daysOnly)
+    }
+
+    @Test func effectiveDisplayFormatPrefersOverrideOverAppSettingsDefault() throws {
+        let originalDefault = AppSettings.defaultDisplayFormat
+        defer { AppSettings.defaultDisplayFormat = originalDefault }
+
+        let context = try makeContext()
+        let tracker = Tracker(
+            name: "Smoking",
+            icon: "flame.fill",
+            colorHex: "#FF0000",
+            displayFormatOverride: .daysOnly
+        )
+        context.insert(tracker)
+
+        AppSettings.defaultDisplayFormat = .detailed
+        #expect(tracker.effectiveDisplayFormat == .daysOnly)
+    }
+}
+
+struct AppSettingsTests {
+    @Test func defaultDisplayFormatRoundTrips() {
+        let original = AppSettings.defaultDisplayFormat
+        defer { AppSettings.defaultDisplayFormat = original }
+
+        AppSettings.defaultDisplayFormat = .detailed
+        #expect(AppSettings.defaultDisplayFormat == .detailed)
+
+        AppSettings.defaultDisplayFormat = .daysOnly
+        #expect(AppSettings.defaultDisplayFormat == .daysOnly)
+    }
 }
 
 @MainActor

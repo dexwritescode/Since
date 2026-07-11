@@ -33,9 +33,8 @@ extension TimeDisplayFormat {
 }
 
 extension Tracker {
-    /// `.smart` until Settings (SIN-6) adds a real global default to fall back to.
     var effectiveDisplayFormat: TimeDisplayFormat {
-        displayFormatOverride ?? .smart
+        displayFormatOverride ?? AppSettings.defaultDisplayFormat
     }
 
     func elapsedTimeInterval(asOf date: Date = .now) -> TimeInterval? {
@@ -43,9 +42,12 @@ extension Tracker {
         return date.timeIntervalSince(start)
     }
 
-    func elapsedTimeString(asOf date: Date = .now) -> String? {
+    /// `format` lets a SwiftUI view pass in a value it observes (e.g. via `@AppStorage`) so the
+    /// view re-renders when the global default changes. Falls back to `effectiveDisplayFormat`
+    /// (which reads `AppSettings` directly, not observed by SwiftUI) for non-view callers.
+    func elapsedTimeString(asOf date: Date = .now, format: TimeDisplayFormat? = nil) -> String? {
         guard let elapsed = elapsedTimeInterval(asOf: date) else { return nil }
-        return effectiveDisplayFormat.string(from: elapsed)
+        return (format ?? effectiveDisplayFormat).string(from: elapsed)
     }
 
     /// The soonest milestone not yet reached, or nil if there isn't one (no active streak, or
@@ -77,11 +79,12 @@ extension Tracker {
 }
 
 extension Milestone {
-    func remainingTimeString(from tracker: Tracker, asOf date: Date = .now) -> String? {
+    /// See `Tracker.elapsedTimeString(asOf:format:)` for why `format` is a separate parameter.
+    func remainingTimeString(from tracker: Tracker, asOf date: Date = .now, format: TimeDisplayFormat? = nil) -> String? {
         guard let elapsed = tracker.elapsedTimeInterval(asOf: date) else { return nil }
         let remaining = triggerDuration - elapsed
         guard remaining > 0 else { return nil }
-        return tracker.effectiveDisplayFormat.string(from: remaining)
+        return (format ?? tracker.effectiveDisplayFormat).string(from: remaining)
     }
 }
 
