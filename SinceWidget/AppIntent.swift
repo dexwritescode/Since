@@ -2,17 +2,14 @@
 //  AppIntent.swift
 //  SinceWidget
 //
-//  Created by Dexter Darwich on 2026-07-02.
-//
 
 import WidgetKit
 import AppIntents
 
-struct ConfigurationAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource { "Configuration" }
-    static var description: IntentDescription { "This is an example widget." }
+struct SelectTrackerIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource { "Select Tracker" }
+    static var description: IntentDescription { "Choose which tracker this widget displays." }
 
-    // An example configurable parameter.
-    @Parameter(title: "Favorite Emoji", default: "😃")
-    var favoriteEmoji: String
+    @Parameter(title: "Tracker")
+    var tracker: TrackerEntity?
 }

@@ -30,6 +30,25 @@ extension TimeDisplayFormat {
             }
         }
     }
+
+    /// Seconds from `elapsedSeconds` until this format's rendered string would next change —
+    /// used to schedule the widget's next timeline reload instead of polling on a fixed interval.
+    func secondsUntilDisplayChange(elapsedSeconds: Int) -> Int {
+        switch self {
+        case .daysOnly:
+            return 86400 - elapsedSeconds % 86400
+        case .detailed:
+            return 60 - elapsedSeconds % 60
+        case .smart:
+            if elapsedSeconds >= 86400 {
+                return 86400 - elapsedSeconds % 86400
+            } else if elapsedSeconds >= 3600 {
+                return 3600 - elapsedSeconds % 3600
+            } else {
+                return 60 - elapsedSeconds % 60
+            }
+        }
+    }
 }
 
 extension Tracker {
@@ -48,6 +67,16 @@ extension Tracker {
     func elapsedTimeString(asOf date: Date = .now, format: TimeDisplayFormat? = nil) -> String? {
         guard let elapsed = elapsedTimeInterval(asOf: date) else { return nil }
         return (format ?? effectiveDisplayFormat).string(from: elapsed)
+    }
+
+    /// The next moment this tracker's rendered elapsed-time string would change under `format`,
+    /// or nil if there's no active streak. Used by the widget to schedule its next reload at a
+    /// meaningful boundary instead of polling.
+    func nextDisplayChangeDate(after date: Date = .now, format: TimeDisplayFormat) -> Date? {
+        guard let elapsed = elapsedTimeInterval(asOf: date) else { return nil }
+        let elapsedSeconds = max(0, Int(elapsed))
+        let secondsUntilChange = format.secondsUntilDisplayChange(elapsedSeconds: elapsedSeconds)
+        return date.addingTimeInterval(TimeInterval(secondsUntilChange))
     }
 
     /// The soonest milestone not yet reached, or nil if there isn't one (no active streak, or

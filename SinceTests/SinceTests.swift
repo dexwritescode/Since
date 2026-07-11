@@ -162,6 +162,27 @@ struct TimeDisplayFormatTests {
         let interval: TimeInterval = 86400 * 3 + 3600 * 4 + 60 * 12
         #expect(TimeDisplayFormat.detailed.string(from: interval) == "3d 4h 12m")
     }
+
+    @Test func smartSecondsUntilChangeTicksByMinuteUnderAnHour() {
+        #expect(TimeDisplayFormat.smart.secondsUntilDisplayChange(elapsedSeconds: 90) == 30)
+        #expect(TimeDisplayFormat.smart.secondsUntilDisplayChange(elapsedSeconds: 0) == 60)
+    }
+
+    @Test func smartSecondsUntilChangeTicksByHourUnderADay() {
+        #expect(TimeDisplayFormat.smart.secondsUntilDisplayChange(elapsedSeconds: 3600 + 100) == 3500)
+    }
+
+    @Test func smartSecondsUntilChangeTicksByDayAtOrAboveADay() {
+        #expect(TimeDisplayFormat.smart.secondsUntilDisplayChange(elapsedSeconds: 86400 + 100) == 86300)
+    }
+
+    @Test func daysOnlySecondsUntilChangeAlwaysTicksByDay() {
+        #expect(TimeDisplayFormat.daysOnly.secondsUntilDisplayChange(elapsedSeconds: 100) == 86300)
+    }
+
+    @Test func detailedSecondsUntilChangeAlwaysTicksByMinute() {
+        #expect(TimeDisplayFormat.detailed.secondsUntilDisplayChange(elapsedSeconds: 86400 + 3600 + 100) == 20)
+    }
 }
 
 @MainActor
@@ -193,6 +214,25 @@ struct TrackerDisplayTests {
         context.insert(tracker)
 
         #expect(tracker.elapsedTimeString() == nil)
+    }
+
+    @Test func nextDisplayChangeDateReflectsCurrentUnitUnderSmartFormat() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+        let now = Date.now
+        tracker.streakPeriods.append(StreakPeriod(startDate: now.addingTimeInterval(-90)))
+
+        let next = try #require(tracker.nextDisplayChangeDate(after: now, format: .smart))
+        #expect(next.timeIntervalSince(now) == 30)
+    }
+
+    @Test func nextDisplayChangeDateIsNilWithoutAnActiveStreak() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+
+        #expect(tracker.nextDisplayChangeDate(format: .smart) == nil)
     }
 
     @Test func nextMilestonePicksSoonestUnreachedOne() throws {
