@@ -51,6 +51,22 @@ extension TimeDisplayFormat {
     }
 }
 
+extension TimeInterval {
+    /// Ultra-compact rendering ("12d", "5h", "30m") for space-constrained contexts like Lock
+    /// Screen circular/inline accessory widgets — independent of the user's chosen
+    /// `TimeDisplayFormat`, since `detailed`'s "3d 4h 12m" simply can't fit there.
+    var compactDurationString: String {
+        let totalSeconds = max(0, Int(self))
+        let days = totalSeconds / 86400
+        let hours = (totalSeconds % 86400) / 3600
+        let minutes = (totalSeconds % 3600) / 60
+
+        if days >= 1 { return "\(days)d" }
+        if hours >= 1 { return "\(hours)h" }
+        return "\(minutes)m"
+    }
+}
+
 extension Tracker {
     var effectiveDisplayFormat: TimeDisplayFormat {
         displayFormatOverride ?? AppSettings.defaultDisplayFormat
@@ -67,6 +83,11 @@ extension Tracker {
     func elapsedTimeString(asOf date: Date = .now, format: TimeDisplayFormat? = nil) -> String? {
         guard let elapsed = elapsedTimeInterval(asOf: date) else { return nil }
         return (format ?? effectiveDisplayFormat).string(from: elapsed)
+    }
+
+    /// See `TimeInterval.compactDurationString` for why this ignores `effectiveDisplayFormat`.
+    func compactElapsedText(asOf date: Date = .now) -> String? {
+        elapsedTimeInterval(asOf: date)?.compactDurationString
     }
 
     /// The next moment this tracker's rendered elapsed-time string would change under `format`,

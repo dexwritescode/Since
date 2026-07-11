@@ -16,6 +16,12 @@ struct SettingsView: View {
     private var defaultDisplayFormat: TimeDisplayFormat = .smart
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
 
+    @AppStorage(
+        AppSettings.lockScreenPrivacyEnabledKey,
+        store: UserDefaults(suiteName: SharedModelContainer.appGroupIdentifier)
+    )
+    private var lockScreenPrivacyEnabled = true
+
     var body: some View {
         NavigationStack {
             Form {
@@ -51,6 +57,14 @@ struct SettingsView: View {
                     Text("Notifications")
                 } footer: {
                     Text("Notifications are used for milestone alerts. Enabling this here only grants permission — scheduling milestone alerts is separate.")
+                }
+
+                Section {
+                    Toggle("Blur Values When Locked", isOn: $lockScreenPrivacyEnabled)
+                } header: {
+                    Text("Lock Screen Widgets")
+                } footer: {
+                    Text("When enabled, tracker values on Lock Screen widgets are hidden until you unlock your device.")
                 }
             }
             .navigationTitle("Settings")
