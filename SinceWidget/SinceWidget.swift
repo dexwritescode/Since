@@ -274,6 +274,7 @@ private struct CircularTrackerView: View {
             Text(snapshot.compactElapsedText)
         }
         .gaugeStyle(.accessoryCircularCapacity)
+        .tint(.white)
         .widgetAccentable()
         .privacySensitive(AppSettings.lockScreenPrivacyEnabled)
     }
