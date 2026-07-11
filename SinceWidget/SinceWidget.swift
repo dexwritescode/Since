@@ -272,10 +272,10 @@ private struct CircularTrackerView: View {
             Image(systemName: snapshot.icon)
         } currentValueLabel: {
             Text(snapshot.compactElapsedText)
-                .privacySensitive(AppSettings.lockScreenPrivacyEnabled)
         }
         .gaugeStyle(.accessoryCircularCapacity)
         .widgetAccentable()
+        .privacySensitive(AppSettings.lockScreenPrivacyEnabled)
     }
 }
 
@@ -283,12 +283,8 @@ private struct InlineTrackerView: View {
     let snapshot: TrackerSnapshot
 
     var body: some View {
-        Label {
-            Text(snapshot.compactElapsedText)
-                .privacySensitive(AppSettings.lockScreenPrivacyEnabled)
-        } icon: {
-            Image(systemName: snapshot.icon)
-        }
+        Label(snapshot.compactElapsedText, systemImage: snapshot.icon)
+            .privacySensitive(AppSettings.lockScreenPrivacyEnabled)
     }
 }
 
