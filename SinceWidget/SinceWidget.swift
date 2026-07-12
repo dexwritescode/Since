@@ -268,15 +268,23 @@ private struct CircularTrackerView: View {
     let snapshot: TrackerSnapshot
 
     var body: some View {
-        Gauge(value: snapshot.milestoneProgress ?? 0, in: 0...1) {
-            Image(systemName: snapshot.icon)
-        } currentValueLabel: {
-            Text(snapshot.compactElapsedText)
+        ZStack {
+            AccessoryWidgetBackground()
+
+            Circle()
+                .trim(from: 0, to: snapshot.milestoneProgress ?? 0)
+                .stroke(style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+
+            VStack(spacing: 0) {
+                Image(systemName: snapshot.icon)
+                    .font(.system(size: 10))
+                Text(snapshot.compactElapsedText)
+                    .font(.system(size: 11, weight: .semibold))
+            }
         }
-        .gaugeStyle(.accessoryCircularCapacity)
-        .tint(.white)
         .widgetAccentable()
-        .privacySensitive(AppSettings.lockScreenPrivacyEnabled)
+        .privacySensitive()
     }
 }
 
@@ -285,7 +293,7 @@ private struct InlineTrackerView: View {
 
     var body: some View {
         Label(snapshot.compactElapsedText, systemImage: snapshot.icon)
-            .privacySensitive(AppSettings.lockScreenPrivacyEnabled)
+            .privacySensitive()
     }
 }
 

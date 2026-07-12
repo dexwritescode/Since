@@ -306,9 +306,6 @@ struct TrackerDisplayTests {
     }
 }
 
-// Serialized: every test here mutates the same process-wide App Group UserDefaults, so running
-// them concurrently (Swift Testing's default within a suite) races on shared state.
-@Suite(.serialized)
 struct AppSettingsTests {
     @Test func defaultDisplayFormatRoundTrips() {
         let original = AppSettings.defaultDisplayFormat
@@ -319,32 +316,6 @@ struct AppSettingsTests {
 
         AppSettings.defaultDisplayFormat = .daysOnly
         #expect(AppSettings.defaultDisplayFormat == .daysOnly)
-    }
-
-    @Test func lockScreenPrivacyEnabledDefaultsToTrue() {
-        let defaults = UserDefaults(suiteName: SharedModelContainer.appGroupIdentifier) ?? .standard
-        let original = defaults.object(forKey: AppSettings.lockScreenPrivacyEnabledKey)
-        defaults.removeObject(forKey: AppSettings.lockScreenPrivacyEnabledKey)
-        defer {
-            if let original {
-                defaults.set(original, forKey: AppSettings.lockScreenPrivacyEnabledKey)
-            } else {
-                defaults.removeObject(forKey: AppSettings.lockScreenPrivacyEnabledKey)
-            }
-        }
-
-        #expect(AppSettings.lockScreenPrivacyEnabled == true)
-    }
-
-    @Test func lockScreenPrivacyEnabledRoundTrips() {
-        let original = AppSettings.lockScreenPrivacyEnabled
-        defer { AppSettings.lockScreenPrivacyEnabled = original }
-
-        AppSettings.lockScreenPrivacyEnabled = false
-        #expect(AppSettings.lockScreenPrivacyEnabled == false)
-
-        AppSettings.lockScreenPrivacyEnabled = true
-        #expect(AppSettings.lockScreenPrivacyEnabled == true)
     }
 }
 
