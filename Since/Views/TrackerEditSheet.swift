@@ -112,7 +112,7 @@ struct TrackerEditSheet: View {
                     }
 
                     Button {
-                        milestoneDrafts.append(MilestoneDraft(id: UUID(), label: "", days: 7))
+                        milestoneDrafts.append(MilestoneDraft(id: UUID(), label: MilestonePreset.week.label, days: MilestonePreset.week.days))
                     } label: {
                         Label("Add Milestone", systemImage: "plus")
                     }

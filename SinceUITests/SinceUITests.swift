@@ -227,6 +227,9 @@ final class SinceUITests: XCTestCase {
         let labelField = app.textFields["Label"]
         XCTAssertTrue(labelField.waitForExistence(timeout: 2))
         labelField.tap()
+        if let existingValue = labelField.value as? String {
+            labelField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingValue.count))
+        }
         labelField.typeText("Big Month")
 
         app.buttons["1 Month"].tap()
@@ -238,7 +241,7 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
-    func testTappingAPresetWithoutTypingALabelStillProducesASavableMilestone() throws {
+    func testDefaultMilestoneStateIsImmediatelySavableWithoutAnyInput() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing"]
         app.launch()
@@ -256,13 +259,41 @@ final class SinceUITests: XCTestCase {
         app.buttons["Add Milestone"].tap()
         XCTAssertTrue(app.textFields["Label"].waitForExistence(timeout: 2))
 
-        app.buttons["1 Week"].tap()
-
+        // Touch nothing else — the default state (matching the pre-highlighted "1 Week" chip)
+        // must already be valid, since a blank label is silently dropped/blocked on save.
         let saveButton = app.buttons["Save"]
         XCTAssertTrue(saveButton.isEnabled)
         saveButton.tap()
 
         XCTAssertTrue(app.staticTexts["1 Week"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testTappingADifferentPresetWithoutCustomizingSyncsTheLabel() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Synced Label Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Synced Label Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["Synced Label Tracker"].tap()
+
+        app.buttons["Add Milestone"].tap()
+        XCTAssertTrue(app.textFields["Label"].waitForExistence(timeout: 2))
+
+        // Default label is "1 Week" (matching the default 7-day value); switching to a
+        // different preset without ever typing a custom label should re-sync the label too.
+        app.buttons["1 Month"].tap()
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["1 Month"].waitForExistence(timeout: 2))
+        XCTAssertFalse(app.staticTexts["1 Week"].exists)
     }
 
     @MainActor
@@ -285,6 +316,9 @@ final class SinceUITests: XCTestCase {
         let labelField = app.textFields["Label"]
         XCTAssertTrue(labelField.waitForExistence(timeout: 2))
         labelField.tap()
+        if let existingValue = labelField.value as? String {
+            labelField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingValue.count))
+        }
         labelField.typeText("One Week")
 
         app.buttons["1 Week"].tap()

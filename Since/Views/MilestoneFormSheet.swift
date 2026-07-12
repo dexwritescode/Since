@@ -19,8 +19,8 @@ struct MilestoneFormSheet: View {
     init(tracker: Tracker, milestoneToEdit: Milestone? = nil) {
         self.tracker = tracker
         self.milestoneToEdit = milestoneToEdit
-        _label = State(initialValue: milestoneToEdit?.label ?? "")
-        _days = State(initialValue: milestoneToEdit.map { max(1, Int($0.triggerDuration / 86400)) } ?? 7)
+        _label = State(initialValue: milestoneToEdit?.label ?? MilestonePreset.week.label)
+        _days = State(initialValue: milestoneToEdit.map { max(1, Int($0.triggerDuration / 86400)) } ?? MilestonePreset.week.days)
     }
 
     private var isEditing: Bool { milestoneToEdit != nil }
