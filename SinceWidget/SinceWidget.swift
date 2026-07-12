@@ -266,15 +266,21 @@ private struct MediumTrackerView: View {
 
 private struct CircularTrackerView: View {
     let snapshot: TrackerSnapshot
+    @Environment(\.redactionReasons) private var redactionReasons
 
     var body: some View {
         ZStack {
             AccessoryWidgetBackground()
 
-            Circle()
-                .trim(from: 0, to: snapshot.milestoneProgress ?? 0)
-                .stroke(style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .rotationEffect(.degrees(-90))
+            // The system's automatic .privacySensitive() redaction only obscures Text/Image
+            // content — a raw Shape like this ring isn't covered, so it's hidden manually here
+            // to avoid leaking milestone progress while the rest of the widget is redacted.
+            if !redactionReasons.contains(.privacy) {
+                Circle()
+                    .trim(from: 0, to: snapshot.milestoneProgress ?? 0)
+                    .stroke(style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
 
             VStack(spacing: 0) {
                 Image(systemName: snapshot.icon)
