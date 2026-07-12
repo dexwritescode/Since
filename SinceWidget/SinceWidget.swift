@@ -12,6 +12,7 @@ struct TrackerSnapshot {
     let icon: String
     let colorHex: String
     let elapsedText: String
+    let compactElapsedText: String
     let startDateText: String?
     let milestoneText: String?
     let milestoneProgress: Double?
@@ -22,6 +23,7 @@ struct TrackerSnapshot {
         icon = tracker.icon
         colorHex = tracker.colorHex
         elapsedText = tracker.elapsedTimeString(asOf: date, format: format) ?? "—"
+        compactElapsedText = tracker.compactElapsedText(asOf: date) ?? "—"
         startDateText = tracker.currentStreakStartDate.map {
             "Since \($0.formatted(date: .abbreviated, time: .omitted))"
         }
@@ -46,6 +48,7 @@ struct TrackerSnapshot {
         icon: String,
         colorHex: String,
         elapsedText: String,
+        compactElapsedText: String,
         startDateText: String?,
         milestoneText: String?,
         milestoneProgress: Double?
@@ -54,6 +57,7 @@ struct TrackerSnapshot {
         self.icon = icon
         self.colorHex = colorHex
         self.elapsedText = elapsedText
+        self.compactElapsedText = compactElapsedText
         self.startDateText = startDateText
         self.milestoneText = milestoneText
         self.milestoneProgress = milestoneProgress
@@ -64,6 +68,7 @@ struct TrackerSnapshot {
         icon: "flame.fill",
         colorHex: "#4F8EF7",
         elapsedText: "12 days",
+        compactElapsedText: "12d",
         startDateText: "Since Jun 28",
         milestoneText: "Next: 2 Weeks — 2 days left",
         milestoneProgress: 0.85
@@ -125,28 +130,66 @@ struct SinceWidgetEntryView: View {
     let entry: SinceWidgetEntry
 
     var body: some View {
+        content
+            .containerBackground(for: .widget) {
+                backgroundTint
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch entry.content {
         case .noSelection:
             noSelectionView
         case .tracker(let snapshot):
-            if family == .systemMedium {
+            switch family {
+            case .systemMedium:
                 MediumTrackerView(snapshot: snapshot)
-            } else {
+            case .accessoryCircular:
+                CircularTrackerView(snapshot: snapshot)
+            case .accessoryInline:
+                InlineTrackerView(snapshot: snapshot)
+            default:
                 SmallTrackerView(snapshot: snapshot)
             }
         }
     }
 
+    @ViewBuilder
     private var noSelectionView: some View {
-        VStack(spacing: 6) {
+        switch family {
+        case .accessoryCircular:
             Image(systemName: "hourglass")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-            Text("Select a Tracker")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        case .accessoryInline:
+            Label("Select Tracker", systemImage: "hourglass")
+        default:
+            VStack(spacing: 6) {
+                Image(systemName: "hourglass")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+                Text("Select a Tracker")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // Lock Screen (accessory) widgets are rendered by the system in its own monochrome tint —
+    // a custom background/color doesn't apply there the way it does on Home Screen widgets.
+    @ViewBuilder
+    private var backgroundTint: some View {
+        switch family {
+        case .accessoryCircular, .accessoryInline:
+            EmptyView()
+        default:
+            switch entry.content {
+            case .noSelection:
+                Color(.systemBackground)
+            case .tracker(let snapshot):
+                Color(hex: snapshot.colorHex).opacity(0.15)
+            }
+        }
     }
 }
 
@@ -221,6 +264,45 @@ private struct MediumTrackerView: View {
     }
 }
 
+private struct CircularTrackerView: View {
+    let snapshot: TrackerSnapshot
+    @Environment(\.redactionReasons) private var redactionReasons
+
+    var body: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+
+            // The system's automatic .privacySensitive() redaction only obscures Text/Image
+            // content — a raw Shape like this ring isn't covered, so it's hidden manually here
+            // to avoid leaking milestone progress while the rest of the widget is redacted.
+            if !redactionReasons.contains(.privacy) {
+                Circle()
+                    .trim(from: 0, to: snapshot.milestoneProgress ?? 0)
+                    .stroke(style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+
+            VStack(spacing: 0) {
+                Image(systemName: snapshot.icon)
+                    .font(.system(size: 10))
+                Text(snapshot.compactElapsedText)
+                    .font(.system(size: 11, weight: .semibold))
+            }
+        }
+        .widgetAccentable()
+        .privacySensitive()
+    }
+}
+
+private struct InlineTrackerView: View {
+    let snapshot: TrackerSnapshot
+
+    var body: some View {
+        Label(snapshot.compactElapsedText, systemImage: snapshot.icon)
+            .privacySensitive()
+    }
+}
+
 private struct ProgressBar: View {
     let progress: Double
     let tint: Color
@@ -242,23 +324,10 @@ struct SinceWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: SelectTrackerIntent.self, provider: Provider()) { entry in
             SinceWidgetEntryView(entry: entry)
-                .containerBackground(for: .widget) {
-                    backgroundTint(for: entry)
-                }
         }
         .configurationDisplayName("Since")
         .description("Shows time since a tracker started.")
-        .supportedFamilies([.systemSmall, .systemMedium])
-    }
-
-    @ViewBuilder
-    private func backgroundTint(for entry: SinceWidgetEntry) -> some View {
-        switch entry.content {
-        case .noSelection:
-            Color(.systemBackground)
-        case .tracker(let snapshot):
-            Color(hex: snapshot.colorHex).opacity(0.15)
-        }
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryInline])
     }
 }
 
@@ -273,4 +342,18 @@ struct SinceWidget: Widget {
     SinceWidget()
 } timeline: {
     SinceWidgetEntry(date: .now, content: .tracker(.placeholder))
+}
+
+#Preview(as: .accessoryCircular) {
+    SinceWidget()
+} timeline: {
+    SinceWidgetEntry(date: .now, content: .tracker(.placeholder))
+    SinceWidgetEntry(date: .now, content: .noSelection)
+}
+
+#Preview(as: .accessoryInline) {
+    SinceWidget()
+} timeline: {
+    SinceWidgetEntry(date: .now, content: .tracker(.placeholder))
+    SinceWidgetEntry(date: .now, content: .noSelection)
 }

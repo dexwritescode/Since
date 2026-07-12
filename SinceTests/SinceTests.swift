@@ -319,6 +319,23 @@ struct AppSettingsTests {
     }
 }
 
+struct CompactDurationStringTests {
+    @Test func showsDaysWhenAtLeastADay() {
+        let interval: TimeInterval = 86400 * 12 + 3600 * 5
+        #expect(interval.compactDurationString == "12d")
+    }
+
+    @Test func showsHoursUnderADay() {
+        let interval: TimeInterval = 3600 * 5 + 60 * 30
+        #expect(interval.compactDurationString == "5h")
+    }
+
+    @Test func showsMinutesUnderAnHour() {
+        #expect(TimeInterval(90).compactDurationString == "1m")
+        #expect(TimeInterval(0).compactDurationString == "0m")
+    }
+}
+
 @MainActor
 struct TrackerResetTests {
     private func makeContext() throws -> ModelContext {
