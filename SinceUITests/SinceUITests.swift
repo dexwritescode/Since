@@ -238,6 +238,34 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
+    func testTappingAPresetWithoutTypingALabelStillProducesASavableMilestone() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("No Label Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["No Label Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["No Label Tracker"].tap()
+
+        app.buttons["Add Milestone"].tap()
+        XCTAssertTrue(app.textFields["Label"].waitForExistence(timeout: 2))
+
+        app.buttons["1 Week"].tap()
+
+        let saveButton = app.buttons["Save"]
+        XCTAssertTrue(saveButton.isEnabled)
+        saveButton.tap()
+
+        XCTAssertTrue(app.staticTexts["1 Week"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
     func testAddingMilestoneWithPresetFromNewTrackerSheet() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing"]

@@ -29,9 +29,12 @@ enum MilestonePreset: CaseIterable {
     }
 }
 
-/// Row of quick-add chips that set `days` to a common preset value in one tap.
+/// Row of quick-add chips that set `days` to a common preset value in one tap. Also fills `label`
+/// with the preset's name when the label is still blank, so a single tap produces a valid,
+/// nameable milestone instead of leaving the required label empty.
 struct MilestonePresetPicker: View {
     @Binding var days: Int
+    @Binding var label: String
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -39,6 +42,9 @@ struct MilestonePresetPicker: View {
                 ForEach(MilestonePreset.allCases, id: \.self) { preset in
                     Button(preset.label) {
                         days = preset.days
+                        if label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            label = preset.label
+                        }
                     }
                     .buttonStyle(.bordered)
                     .tint(days == preset.days ? .accentColor : .secondary)

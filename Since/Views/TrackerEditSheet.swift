@@ -99,7 +99,7 @@ struct TrackerEditSheet: View {
                     ForEach($milestoneDrafts) { $draft in
                         VStack(alignment: .leading, spacing: 8) {
                             TextField("Label", text: $draft.label)
-                            MilestonePresetPicker(days: $draft.days)
+                            MilestonePresetPicker(days: $draft.days, label: $draft.label)
                             HStack {
                                 Spacer()
                                 DayCountStepper(days: $draft.days)

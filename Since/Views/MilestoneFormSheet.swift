@@ -33,7 +33,7 @@ struct MilestoneFormSheet: View {
         NavigationStack {
             Form {
                 TextField("Label", text: $label)
-                MilestonePresetPicker(days: $days)
+                MilestonePresetPicker(days: $days, label: $label)
                 HStack {
                     Text("Duration")
                     Spacer()
