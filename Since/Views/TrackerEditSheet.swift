@@ -97,16 +97,15 @@ struct TrackerEditSheet: View {
 
                 Section("Milestones") {
                     ForEach($milestoneDrafts) { $draft in
-                        HStack {
+                        VStack(alignment: .leading, spacing: 8) {
                             TextField("Label", text: $draft.label)
-                            Spacer()
-                            Stepper(
-                                "\(draft.days) day\(draft.days == 1 ? "" : "s")",
-                                value: $draft.days,
-                                in: 1...3650
-                            )
-                            .fixedSize()
+                            MilestonePresetPicker(days: $draft.days)
+                            HStack {
+                                Spacer()
+                                DayCountStepper(days: $draft.days)
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
                     .onDelete { offsets in
                         milestoneDrafts.remove(atOffsets: offsets)

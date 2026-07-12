@@ -207,6 +207,70 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
+    func testAddingMilestoneWithPresetFromTrackerDetailView() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Preset Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Preset Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["Preset Tracker"].tap()
+
+        app.buttons["Add Milestone"].tap()
+
+        let labelField = app.textFields["Label"]
+        XCTAssertTrue(labelField.waitForExistence(timeout: 2))
+        labelField.tap()
+        labelField.typeText("Big Month")
+
+        app.buttons["1 Month"].tap()
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Big Month"].waitForExistence(timeout: 2))
+        // Truncates to whole days, and a little time has elapsed since the streak started.
+        XCTAssertTrue(app.staticTexts["29 days left"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testAddingMilestoneWithPresetFromNewTrackerSheet() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Inline Preset Tracker\n")
+
+        for _ in 0..<3 where !app.buttons["Add Milestone"].exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(app.buttons["Add Milestone"].waitForExistence(timeout: 2))
+        app.buttons["Add Milestone"].tap()
+        let labelField = app.textFields["Label"]
+        XCTAssertTrue(labelField.waitForExistence(timeout: 2))
+        labelField.tap()
+        labelField.typeText("One Week")
+
+        app.buttons["1 Week"].tap()
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Inline Preset Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["Inline Preset Tracker"].tap()
+
+        XCTAssertTrue(app.staticTexts["One Week"].waitForExistence(timeout: 2))
+        // Truncates to whole days, and a little time has elapsed since the streak started.
+        XCTAssertTrue(app.staticTexts["6 days left"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

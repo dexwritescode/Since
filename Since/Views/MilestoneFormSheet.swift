@@ -33,11 +33,12 @@ struct MilestoneFormSheet: View {
         NavigationStack {
             Form {
                 TextField("Label", text: $label)
-                Stepper(
-                    "\(days) day\(days == 1 ? "" : "s")",
-                    value: $days,
-                    in: 1...3650
-                )
+                MilestonePresetPicker(days: $days)
+                HStack {
+                    Text("Duration")
+                    Spacer()
+                    DayCountStepper(days: $days)
+                }
             }
             .navigationTitle(isEditing ? "Edit Milestone" : "New Milestone")
             .navigationBarTitleDisplayMode(.inline)
