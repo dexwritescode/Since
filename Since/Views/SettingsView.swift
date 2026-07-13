@@ -4,10 +4,12 @@
 //
 
 import SwiftUI
+import SwiftData
 import UserNotifications
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Query private var trackers: [Tracker]
 
     @AppStorage(
         AppSettings.defaultDisplayFormatKey,
@@ -83,6 +85,9 @@ struct SettingsView: View {
         Task {
             _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
             await refreshNotificationStatus()
+            for tracker in trackers {
+                await NotificationScheduler.rescheduleAll(for: tracker)
+            }
         }
     }
 
@@ -94,4 +99,5 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+        .modelContainer(for: Tracker.self, inMemory: true)
 }

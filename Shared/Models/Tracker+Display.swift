@@ -136,6 +136,16 @@ extension Milestone {
         guard remaining > 0 else { return nil }
         return (format ?? tracker.effectiveDisplayFormat).string(from: remaining)
     }
+
+    /// When this milestone is reached, relative to `tracker`'s current streak start — or nil if
+    /// there's no active streak or the milestone has already been reached as of `date`. A
+    /// notification is only worth scheduling for a date this method returns.
+    func fireDate(for tracker: Tracker, asOf date: Date = .now) -> Date? {
+        guard let start = tracker.currentStreakStartDate else { return nil }
+        let fireDate = start.addingTimeInterval(triggerDuration)
+        guard fireDate > date else { return nil }
+        return fireDate
+    }
 }
 
 extension StreakPeriod {

@@ -41,6 +41,11 @@ struct ResetStreakSheet: View {
     private func reset() {
         Tracker.resetStreak(on: tracker, note: note)
         try? modelContext.save()
+
+        Task {
+            await NotificationScheduler.rescheduleAll(for: tracker)
+        }
+
         dismiss()
     }
 }

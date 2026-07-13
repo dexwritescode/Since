@@ -288,6 +288,44 @@ struct TrackerDisplayTests {
         #expect(milestone.remainingTimeString(from: tracker, asOf: now) == "2 days")
     }
 
+    @Test func fireDateIsStreakStartPlusTriggerDurationWhenNotYetReached() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+        let now = Date.now
+        let start = now.addingTimeInterval(-86400 * 5)
+        tracker.streakPeriods.append(StreakPeriod(startDate: start))
+
+        let milestone = Milestone(label: "1 Week", triggerDuration: 86400 * 7)
+        tracker.milestones.append(milestone)
+
+        #expect(milestone.fireDate(for: tracker, asOf: now) == start.addingTimeInterval(86400 * 7))
+    }
+
+    @Test func fireDateIsNilWhenMilestoneAlreadyReached() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+        let now = Date.now
+        tracker.streakPeriods.append(StreakPeriod(startDate: now.addingTimeInterval(-86400 * 10)))
+
+        let milestone = Milestone(label: "1 Week", triggerDuration: 86400 * 7)
+        tracker.milestones.append(milestone)
+
+        #expect(milestone.fireDate(for: tracker, asOf: now) == nil)
+    }
+
+    @Test func fireDateIsNilWithoutAnActiveStreak() throws {
+        let context = try makeContext()
+        let tracker = Tracker(name: "Smoking", icon: "flame.fill", colorHex: "#FF0000")
+        context.insert(tracker)
+
+        let milestone = Milestone(label: "1 Week", triggerDuration: 86400 * 7)
+        tracker.milestones.append(milestone)
+
+        #expect(milestone.fireDate(for: tracker) == nil)
+    }
+
     @Test func effectiveDisplayFormatFallsBackToAppSettingsDefaultWhenNoOverride() throws {
         let originalDefault = AppSettings.defaultDisplayFormat
         defer { AppSettings.defaultDisplayFormat = originalDefault }

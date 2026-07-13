@@ -69,6 +69,7 @@ struct ContentView: View {
             for index in offsets {
                 let tracker = trackers[index]
                 if selectedTracker == tracker { selectedTracker = nil }
+                NotificationScheduler.cancelAll(for: tracker)
                 modelContext.delete(tracker)
             }
         }

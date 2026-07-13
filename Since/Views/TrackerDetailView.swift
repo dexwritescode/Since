@@ -192,7 +192,9 @@ struct TrackerDetailView: View {
     private func deleteMilestones(at offsets: IndexSet) {
         let milestones = sortedMilestones
         for index in offsets {
-            modelContext.delete(milestones[index])
+            let milestone = milestones[index]
+            NotificationScheduler.cancel(milestone)
+            modelContext.delete(milestone)
         }
         try? modelContext.save()
     }
