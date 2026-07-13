@@ -125,6 +125,21 @@ struct MilestoneReconciliationTests {
     }
 }
 
+struct MilestonePresetTests {
+    @Test func presetsMapToExpectedDayCounts() {
+        #expect(MilestonePreset.day.days == 1)
+        #expect(MilestonePreset.week.days == 7)
+        #expect(MilestonePreset.month.days == 30)
+        #expect(MilestonePreset.hundredDays.days == 100)
+        #expect(MilestonePreset.year.days == 365)
+    }
+
+    @Test func presetsHaveDistinctLabels() {
+        let labels = Set(MilestonePreset.allCases.map(\.label))
+        #expect(labels.count == MilestonePreset.allCases.count)
+    }
+}
+
 struct ColorHexTests {
     @Test func sixDigitHexRoundTrips() {
         let color = Color(hex: "#4F8EF7")

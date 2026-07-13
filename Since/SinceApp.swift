@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 @main
 struct SinceApp: App {
@@ -27,6 +28,9 @@ struct SinceApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    UIApplication.shared.addTapGestureRecognizerToDismissKeyboard()
+                }
         }
         .modelContainer(Self.modelContainer)
     }

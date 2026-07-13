@@ -207,6 +207,132 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
+    func testAddingMilestoneWithPresetFromTrackerDetailView() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Preset Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Preset Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["Preset Tracker"].tap()
+
+        app.buttons["Add Milestone"].tap()
+
+        let labelField = app.textFields["Label"]
+        XCTAssertTrue(labelField.waitForExistence(timeout: 2))
+        labelField.tap()
+        if let existingValue = labelField.value as? String {
+            labelField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingValue.count))
+        }
+        labelField.typeText("Big Month")
+
+        app.buttons["1 Month"].tap()
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Big Month"].waitForExistence(timeout: 2))
+        // Truncates to whole days, and a little time has elapsed since the streak started.
+        XCTAssertTrue(app.staticTexts["29 days left"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testDefaultMilestoneStateIsImmediatelySavableWithoutAnyInput() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("No Label Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["No Label Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["No Label Tracker"].tap()
+
+        app.buttons["Add Milestone"].tap()
+        XCTAssertTrue(app.textFields["Label"].waitForExistence(timeout: 2))
+
+        // Touch nothing else — the default state (matching the pre-highlighted "1 Week" chip)
+        // must already be valid, since a blank label is silently dropped/blocked on save.
+        let saveButton = app.buttons["Save"]
+        XCTAssertTrue(saveButton.isEnabled)
+        saveButton.tap()
+
+        XCTAssertTrue(app.staticTexts["1 Week"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testTappingADifferentPresetWithoutCustomizingSyncsTheLabel() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Synced Label Tracker")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Synced Label Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["Synced Label Tracker"].tap()
+
+        app.buttons["Add Milestone"].tap()
+        XCTAssertTrue(app.textFields["Label"].waitForExistence(timeout: 2))
+
+        // Default label is "1 Week" (matching the default 7-day value); switching to a
+        // different preset without ever typing a custom label should re-sync the label too.
+        app.buttons["1 Month"].tap()
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["1 Month"].waitForExistence(timeout: 2))
+        XCTAssertFalse(app.staticTexts["1 Week"].exists)
+    }
+
+    @MainActor
+    func testAddingMilestoneWithPresetFromNewTrackerSheet() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].tap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 2))
+        nameField.tap()
+        nameField.typeText("Inline Preset Tracker\n")
+
+        for _ in 0..<3 where !app.buttons["Add Milestone"].exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(app.buttons["Add Milestone"].waitForExistence(timeout: 2))
+        app.buttons["Add Milestone"].tap()
+        let labelField = app.textFields["Label"]
+        XCTAssertTrue(labelField.waitForExistence(timeout: 2))
+        labelField.tap()
+        if let existingValue = labelField.value as? String {
+            labelField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingValue.count))
+        }
+        labelField.typeText("One Week")
+
+        app.buttons["1 Week"].tap()
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Inline Preset Tracker"].waitForExistence(timeout: 2))
+        app.staticTexts["Inline Preset Tracker"].tap()
+
+        XCTAssertTrue(app.staticTexts["One Week"].waitForExistence(timeout: 2))
+        // Truncates to whole days, and a little time has elapsed since the streak started.
+        XCTAssertTrue(app.staticTexts["6 days left"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

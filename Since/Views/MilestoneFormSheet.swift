@@ -19,8 +19,8 @@ struct MilestoneFormSheet: View {
     init(tracker: Tracker, milestoneToEdit: Milestone? = nil) {
         self.tracker = tracker
         self.milestoneToEdit = milestoneToEdit
-        _label = State(initialValue: milestoneToEdit?.label ?? "")
-        _days = State(initialValue: milestoneToEdit.map { max(1, Int($0.triggerDuration / 86400)) } ?? 7)
+        _label = State(initialValue: milestoneToEdit?.label ?? MilestonePreset.week.label)
+        _days = State(initialValue: milestoneToEdit.map { max(1, Int($0.triggerDuration / 86400)) } ?? MilestonePreset.week.days)
     }
 
     private var isEditing: Bool { milestoneToEdit != nil }
@@ -33,11 +33,12 @@ struct MilestoneFormSheet: View {
         NavigationStack {
             Form {
                 TextField("Label", text: $label)
-                Stepper(
-                    "\(days) day\(days == 1 ? "" : "s")",
-                    value: $days,
-                    in: 1...3650
-                )
+                MilestonePresetPicker(days: $days, label: $label)
+                HStack {
+                    Text("Duration")
+                    Spacer()
+                    DayCountStepper(days: $days)
+                }
             }
             .navigationTitle(isEditing ? "Edit Milestone" : "New Milestone")
             .navigationBarTitleDisplayMode(.inline)
