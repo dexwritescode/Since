@@ -24,6 +24,7 @@ extension Tracker {
         let existingByID = Dictionary(uniqueKeysWithValues: existingMilestones.map { ($0.id, $0) })
 
         for milestone in existingMilestones where !draftIDs.contains(milestone.id) {
+            NotificationScheduler.cancel(milestone)
             context.delete(milestone)
         }
 
@@ -156,6 +157,11 @@ struct TrackerEditSheet: View {
         Tracker.reconcileMilestones(on: resolvedTracker, with: milestoneDrafts, in: modelContext)
 
         try? modelContext.save()
+
+        Task {
+            await NotificationScheduler.rescheduleAll(for: resolvedTracker)
+        }
+
         dismiss()
     }
 }

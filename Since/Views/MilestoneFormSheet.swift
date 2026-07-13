@@ -58,14 +58,23 @@ struct MilestoneFormSheet: View {
         let trimmedLabel = label.trimmingCharacters(in: .whitespacesAndNewlines)
         let duration = TimeInterval(days) * 86400
 
+        let savedMilestone: Milestone
         if let milestone = milestoneToEdit {
             milestone.label = trimmedLabel
             milestone.triggerDuration = duration
+            savedMilestone = milestone
         } else {
-            tracker.milestones.append(Milestone(label: trimmedLabel, triggerDuration: duration))
+            let milestone = Milestone(label: trimmedLabel, triggerDuration: duration)
+            tracker.milestones.append(milestone)
+            savedMilestone = milestone
         }
 
         try? modelContext.save()
+
+        Task {
+            await NotificationScheduler.schedule(savedMilestone, for: tracker)
+        }
+
         dismiss()
     }
 }
