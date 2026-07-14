@@ -4,6 +4,9 @@ tracker-app-plan.md
 # Local signing configuration (contains your personal Apple Developer Team ID)
 Config/Signing.xcconfig
 
+# App icon generator scratch output (candidate renders, not shipped source)
+Scripts/output/
+
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
