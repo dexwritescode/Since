@@ -54,6 +54,21 @@ struct SettingsView: View {
                 } footer: {
                     Text("Notifications are used for milestone alerts. Enabling this here only grants permission — scheduling milestone alerts is separate.")
                 }
+
+                Section {
+                    if let exportDocument = try? TrackerExporter.document(forAll: trackers) {
+                        ShareLink(
+                            item: exportDocument,
+                            preview: SharePreview("Since Export")
+                        ) {
+                            Label("Export All Trackers", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                } header: {
+                    Text("Backup")
+                } footer: {
+                    Text("Exports every tracker, its milestones, and its full streak history as a single JSON file you can save or send anywhere.")
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

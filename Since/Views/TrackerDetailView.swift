@@ -81,6 +81,16 @@ struct TrackerDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem {
+                if let exportDocument = try? TrackerExporter.document(for: tracker) {
+                    ShareLink(
+                        item: exportDocument,
+                        preview: SharePreview("\(tracker.name) Export")
+                    ) {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+            ToolbarItem {
                 Button {
                     isPresentingEditTrackerSheet = true
                 } label: {
