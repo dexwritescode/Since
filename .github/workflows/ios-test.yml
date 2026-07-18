@@ -25,10 +25,10 @@ jobs:
           - "iPhone 17 Pro Max"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Cache DerivedData
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/Library/Developer/Xcode/DerivedData
           key: deriveddata-${{ runner.os }}-${{ matrix.device }}-${{ hashFiles('**/*.swift', 'Since.xcodeproj/project.pbxproj') }}
