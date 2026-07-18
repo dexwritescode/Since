@@ -6,6 +6,7 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -17,6 +18,12 @@ struct SettingsView: View {
     )
     private var defaultDisplayFormat: TimeDisplayFormat = .smart
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
+
+    @State private var isPresentingFileImporter = false
+    @State private var isPresentingImportPreview = false
+    @State private var parsedImportFile: TrackerBackupFile?
+    @State private var importErrorMessage: String?
+    @State private var importSummary: ImportSummary?
 
     var body: some View {
         NavigationStack {
@@ -64,10 +71,16 @@ struct SettingsView: View {
                             Label("Export All Trackers", systemImage: "square.and.arrow.up")
                         }
                     }
+
+                    Button {
+                        isPresentingFileImporter = true
+                    } label: {
+                        Label("Import", systemImage: "square.and.arrow.down")
+                    }
                 } header: {
                     Text("Backup")
                 } footer: {
-                    Text("Exports every tracker, its milestones, and its full streak history as a single JSON file you can save or send anywhere.")
+                    Text("Exports every tracker, its milestones, and its full streak history as a single JSON file you can save or send anywhere. Importing shows a preview before anything is added.")
                 }
             }
             .navigationTitle("Settings")
@@ -80,6 +93,59 @@ struct SettingsView: View {
             .task {
                 await refreshNotificationStatus()
             }
+            .fileImporter(isPresented: $isPresentingFileImporter, allowedContentTypes: [.json]) { result in
+                handleFileImportResult(result)
+            }
+            .sheet(isPresented: $isPresentingImportPreview) {
+                if let parsedImportFile {
+                    ImportPreviewSheet(file: parsedImportFile) { summary in
+                        importSummary = summary
+                    }
+                }
+            }
+            .alert(
+                "Couldn't Import File",
+                isPresented: Binding(
+                    get: { importErrorMessage != nil },
+                    set: { if !$0 { importErrorMessage = nil } }
+                )
+            ) {
+                Button("OK") { importErrorMessage = nil }
+            } message: {
+                Text(importErrorMessage ?? "")
+            }
+            .alert(
+                "Import Complete",
+                isPresented: Binding(
+                    get: { importSummary != nil },
+                    set: { if !$0 { importSummary = nil } }
+                )
+            ) {
+                Button("OK") { importSummary = nil }
+            } message: {
+                Text(importSummaryText)
+            }
+        }
+    }
+
+    private var importSummaryText: String {
+        guard let importSummary else { return "" }
+        return "Imported \(importSummary.imported), merged \(importSummary.merged), overwritten \(importSummary.overwritten), skipped \(importSummary.skipped)."
+    }
+
+    private func handleFileImportResult(_ result: Result<URL, Error>) {
+        do {
+            let url = try result.get()
+            let didStartAccessing = url.startAccessingSecurityScopedResource()
+            defer {
+                if didStartAccessing { url.stopAccessingSecurityScopedResource() }
+            }
+
+            let data = try Data(contentsOf: url)
+            parsedImportFile = try TrackerImporter.parse(data)
+            isPresentingImportPreview = true
+        } catch {
+            importErrorMessage = error.localizedDescription
         }
     }
 

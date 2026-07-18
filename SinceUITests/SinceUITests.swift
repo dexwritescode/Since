@@ -333,6 +333,21 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
+    func testSettingsShowsBackupSectionWithExportAndImportEntryPoints() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Settings"].tap()
+
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 2))
+        // Export/Import hand off to system UI (share sheet, Files picker) that XCUITest can't
+        // reliably drive in CI — this only checks the entry points render, not the system flows.
+        XCTAssertTrue(app.buttons["Export All Trackers"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
