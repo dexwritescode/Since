@@ -22,18 +22,19 @@ jobs:
       fail-fast: false
       matrix:
         device:
-          - "iPhone 17 Pro Max"
+          - "iPhone 17"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Cache DerivedData
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/Library/Developer/Xcode/DerivedData
           key: deriveddata-${{ runner.os }}-${{ matrix.device }}-${{ hashFiles('**/*.swift', 'Since.xcodeproj/project.pbxproj') }}
           restore-keys: |
             deriveddata-${{ runner.os }}-${{ matrix.device }}-
+            deriveddata-${{ runner.os }}-
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
@@ -41,10 +42,24 @@ jobs:
       - name: Create signing config
         run: cp -f Config/Signing.xcconfig.example Config/Signing.xcconfig
 
+      - name: Pre-boot Simulator
+        run: |
+          xcrun simctl boot "${{ matrix.device }}" || true
+          xcrun simctl bootstatus "${{ matrix.device }}" -b
+
       - name: Test on ${{ matrix.device }}
         run: |
           xcodebuild test \
             -project Since.xcodeproj \
             -scheme Since \
             -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
+            -resultBundlePath "TestResults/Since.xcresult" \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: xcresult-${{ matrix.device }}
+          path: TestResults
+          if-no-files-found: ignore
