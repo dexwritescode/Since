@@ -53,4 +53,13 @@ jobs:
             -project Since.xcodeproj \
             -scheme Since \
             -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
+            -resultBundlePath "TestResults/Since.xcresult" \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: xcresult-${{ matrix.device }}
+          path: TestResults
+          if-no-files-found: ignore
