@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test · ${{ matrix.device }}
+  unit-tests:
+    name: Unit Tests · ${{ matrix.device }}
     runs-on: macos-26
     strategy:
       fail-fast: false
@@ -31,10 +31,10 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/Library/Developer/Xcode/DerivedData
-          key: deriveddata-${{ runner.os }}-${{ matrix.device }}-${{ hashFiles('**/*.swift', 'Since.xcodeproj/project.pbxproj') }}
+          key: deriveddata-unit-${{ runner.os }}-${{ matrix.device }}-${{ hashFiles('**/*.swift', 'Since.xcodeproj/project.pbxproj') }}
           restore-keys: |
-            deriveddata-${{ runner.os }}-${{ matrix.device }}-
-            deriveddata-${{ runner.os }}-
+            deriveddata-unit-${{ runner.os }}-${{ matrix.device }}-
+            deriveddata-unit-${{ runner.os }}-
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
@@ -47,13 +47,14 @@ jobs:
           xcrun simctl boot "${{ matrix.device }}" || true
           xcrun simctl bootstatus "${{ matrix.device }}" -b
 
-      - name: Test on ${{ matrix.device }}
+      - name: Run unit tests on ${{ matrix.device }}
         run: |
           xcodebuild test \
             -project Since.xcodeproj \
             -scheme Since \
             -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
-            -resultBundlePath "TestResults/Since.xcresult" \
+            -only-testing:SinceTests \
+            -resultBundlePath "TestResults/SinceTests.xcresult" \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO
 
@@ -61,6 +62,57 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: xcresult-${{ matrix.device }}
+          name: xcresult-unit-${{ matrix.device }}
+          path: TestResults
+          if-no-files-found: ignore
+
+  ui-tests:
+    name: UI Tests · ${{ matrix.device }}
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        device:
+          - "iPhone 17"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache DerivedData
+        uses: actions/cache@v6
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: deriveddata-ui-${{ runner.os }}-${{ matrix.device }}-${{ hashFiles('**/*.swift', 'Since.xcodeproj/project.pbxproj') }}
+          restore-keys: |
+            deriveddata-ui-${{ runner.os }}-${{ matrix.device }}-
+            deriveddata-ui-${{ runner.os }}-
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+
+      - name: Create signing config
+        run: cp -f Config/Signing.xcconfig.example Config/Signing.xcconfig
+
+      - name: Pre-boot Simulator
+        run: |
+          xcrun simctl boot "${{ matrix.device }}" || true
+          xcrun simctl bootstatus "${{ matrix.device }}" -b
+
+      - name: Run UI tests on ${{ matrix.device }}
+        run: |
+          xcodebuild test \
+            -project Since.xcodeproj \
+            -scheme Since \
+            -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
+            -only-testing:SinceUITests \
+            -resultBundlePath "TestResults/SinceUITests.xcresult" \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: xcresult-ui-${{ matrix.device }}
           path: TestResults
           if-no-files-found: ignore
