@@ -37,8 +37,14 @@ struct TrackerIconCatalogTests {
 
     @Test func searchMatchesCategoryNameAsWellAsSymbolName() {
         let results = TrackerIconCatalog.search("Fitness")
-        let fitnessCategory = TrackerIconCatalog.categories.first { $0.name == "Fitness & Activity" }!
+        let fitnessCategory = TrackerIconCatalog.categories.first { $0.name == "Fitness" }!
         #expect(Set(fitnessCategory.symbolNames).isSubset(of: Set(results)))
+    }
+
+    @Test func searchMatchesAppleProvidedKeywordsNotJustNameOrCategory() {
+        // "bird.fill" carries the Apple-provided keyword "animals" but neither its own name
+        // nor its category ("Nature") contains that substring.
+        #expect(TrackerIconCatalog.search("animals").contains("bird.fill"))
     }
 
     @Test func searchWithNoMatchesReturnsEmptyArray() {
@@ -48,5 +54,10 @@ struct TrackerIconCatalogTests {
     @Test func searchResultsContainNoDuplicates() {
         let results = TrackerIconCatalog.search("fill")
         #expect(Set(results).count == results.count)
+    }
+
+    @Test func everySymbolHasAtLeastOneCategory() {
+        let categorized = Set(TrackerIconCatalog.categories.flatMap(\.symbolNames))
+        #expect(!categorized.isEmpty)
     }
 }

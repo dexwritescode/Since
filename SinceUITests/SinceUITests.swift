@@ -388,6 +388,30 @@ final class SinceUITests: XCTestCase {
     }
 
     @MainActor
+    func testTappingACategoryTabSwitchesToThatCategorysIcons() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing"]
+        app.launch()
+
+        app.buttons["Add Tracker"].waitThenTap()
+        let nameField = app.textFields["Tracker name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: uiTimeout))
+        nameField.tap()
+        nameField.typeText("Tab Tracker")
+
+        app.buttons["Icon"].waitThenTap()
+
+        app.buttons["Weather"].waitThenTap()
+        app.buttons["cloud.fill"].waitThenTap()
+
+        // Selecting an icon pops back to the edit sheet automatically.
+        XCTAssertTrue(nameField.waitForExistence(timeout: uiTimeout))
+
+        app.buttons["Save"].waitThenTap()
+        XCTAssertTrue(app.staticTexts["Tab Tracker"].waitForExistence(timeout: uiTimeout))
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
