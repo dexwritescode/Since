@@ -80,7 +80,17 @@ struct TrackerEditSheet: View {
                 }
 
                 Section("Icon") {
-                    IconPickerView(selection: $icon, tintColor: color)
+                    NavigationLink {
+                        IconPickerScreen(selection: $icon, tintColor: color)
+                    } label: {
+                        HStack {
+                            Text("Icon")
+                            Spacer()
+                            IconGridButton(symbolName: icon, isSelected: true, tintColor: color) {}
+                                .allowsHitTesting(false)
+                                .accessibilityHidden(true)
+                        }
+                    }
                 }
 
                 Section("Color") {

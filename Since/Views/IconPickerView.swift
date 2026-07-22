@@ -6,8 +6,8 @@
 import SwiftUI
 
 enum TrackerIcon {
-    /// Curated pool for the v1.0 icon picker. A searchable/expanded picker is tracked
-    /// separately (SIN-24) since it needs a much larger bundled symbol dataset.
+    /// Curated pool shown as the "Suggested" section atop the full icon picker
+    /// (see IconPickerScreen / TrackerIconCatalog).
     static let curated: [String] = [
         "flame.fill",
         "drop.fill",
@@ -37,37 +37,37 @@ enum TrackerIcon {
     ]
 }
 
-struct IconPickerView: View {
-    @Binding var selection: String
+struct IconGridButton: View {
+    let symbolName: String
+    let isSelected: Bool
     var tintColor: Color
-
-    private let columns = [GridItem(.adaptive(minimum: 44), spacing: 12)]
+    var action: () -> Void
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
-            ForEach(TrackerIcon.curated, id: \.self) { icon in
-                Button {
-                    selection = icon
-                } label: {
-                    Image(systemName: icon)
-                        .font(.title2)
-                        .frame(width: 44, height: 44)
-                        .foregroundStyle(icon == selection ? .white : tintColor)
-                        .background(
-                            Circle()
-                                .fill(icon == selection ? tintColor : tintColor.opacity(0.15))
-                        )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(icon)
-                .accessibilityAddTraits(icon == selection ? .isSelected : [])
-            }
+        Button(action: action) {
+            Image(systemName: symbolName)
+                .font(.title2)
+                .frame(width: 44, height: 44)
+                .foregroundStyle(isSelected ? .white : tintColor)
+                .background(
+                    Circle()
+                        .fill(isSelected ? tintColor : tintColor.opacity(0.15))
+                )
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(symbolName)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
 #Preview {
     @Previewable @State var selection = "flame.fill"
-    return IconPickerView(selection: $selection, tintColor: .orange)
-        .padding()
+    return LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 12)], spacing: 12) {
+        ForEach(TrackerIcon.curated, id: \.self) { icon in
+            IconGridButton(symbolName: icon, isSelected: icon == selection, tintColor: .orange) {
+                selection = icon
+            }
+        }
+    }
+    .padding()
 }
